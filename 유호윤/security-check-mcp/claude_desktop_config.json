@@ -2,7 +2,7 @@
   "mcpServers": {
     "security-test": {
       "command": "python",
-      "args": ["C:\\security-test\\project2.py"],
+      "args": ["C:\\security-test\\project1.py"],
       "env": {}
     }
   }
