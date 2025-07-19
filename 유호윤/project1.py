@@ -48,7 +48,7 @@ def run_powershell_command(command: str) -> str:
 
  
 # MCP 서버 생성
-mcp = FastMCP(name="project2", host="127.0.0.1", port=5000, timeout=30)
+mcp = FastMCP(name="project1", host="127.0.0.1", port=5000, timeout=30)
  
  
 # 간단한 에코 도구
