@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, List, Any
-import requests  # Claude API 호출 위해 추가
+import requests  # Claude API 호출용 라이브러리
 
 mcp = FastMCP(name="sensitive_data_scanner", host="127.0.0.1", port=5004, timeout=60)
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 # MCP 서버 생성 (127.0.0.1:5002)
 mcp = FastMCP(name="system_security_checker", host="127.0.0.1", port=5002, timeout=30)
 
-# Claude API 호출 함수 추가
+# Claude API 호출 함수
 def call_claude_api(prompt_text: str) -> str:
     CLAUDE_API_URL = "https://api.anthropic.com/v1/complete"
     API_KEY = "여기에_클로드_API_키_넣으세요"  # 본인 API 키로 변경하세요

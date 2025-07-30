@@ -7,7 +7,7 @@ import mimetypes
 from datetime import datetime
 from typing import Dict, List, Any, Set
 import hashlib
-import requests  # Claude API 호출용 추가
+import requests  # Claude API 호출용 라이브러리
 
 mcp = FastMCP(name="sensitive_data_scanner", host="127.0.0.1", port=5004, timeout=60)
 
@@ -221,7 +221,7 @@ def get_files_to_scan(directories: List[str], max_files: int = 1000) -> List[str
     
     return files_to_scan
 
-# Claude API 호출 함수 추가
+# Claude API 호출 함수
 def call_claude_api(prompt: str) -> str:
     api_url = "https://api.anthropic.com/v1/complete"
     api_key = os.getenv("CLAUDE_API_KEY")

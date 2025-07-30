@@ -206,7 +206,7 @@ def write_file(filename: str, content: str) -> None:
     except Exception as e:
         print(f"파일 쓰기 오류: {e}")
 
-# === Claude API 호출 함수 추가 ===
+# Claude API 호출 함수
 def call_claude_api(prompt: str) -> str:
     api_url = "https://api.anthropic.com/v1/complete"
     api_key = os.getenv("CLAUDE_API_KEY")
