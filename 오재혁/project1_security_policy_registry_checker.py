@@ -4,24 +4,28 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, List, Any
-import requests  # Claude API 호출용 라이브러리
+import requests  # Claude API 호출 위해 추가
 
-mcp = FastMCP(name="sensitive_data_scanner", host="127.0.0.1", port=5004, timeout=60)
+mcp = FastMCP(name="system_security_checker", host="127.0.0.1", port=5002, timeout=30)
 
-@mcp.tool()
-def scan_sensitive_data():
-    return "스캔 완료"
+# @mcp.tool()
+# def scan_sensitive_data():
+#     return "스캔 완료"
 
-if __name__ == "__main__":
-    mcp.run()
+# if __name__ == "__main__":
+#     mcp.run()
 
 # MCP 서버 생성 (127.0.0.1:5002)
 mcp = FastMCP(name="system_security_checker", host="127.0.0.1", port=5002, timeout=30)
 
-# Claude API 호출 함수
+# Claude API 호출 함수 추가
 def call_claude_api(prompt_text: str) -> str:
     CLAUDE_API_URL = "https://api.anthropic.com/v1/complete"
-    API_KEY = "여기에_클로드_API_키_넣으세요"  # 본인 API 키로 변경하세요
+    API_KEY = os.getenv("CLAUDE_API_KEY")  # ✅ 반드시 환경 변수로 설정되어 있어야 함
+    
+    if not API_KEY:
+        return "❌ Claude API 키가 설정되지 않았습니다."
+
 
     headers = {
         "x-api-key": API_KEY,
@@ -29,13 +33,19 @@ def call_claude_api(prompt_text: str) -> str:
     }
     data = {
         "model": "claude-v1",
-        "prompt": prompt_text,
+        "prompt": f"\n\nHuman: {prompt_text}\n\nAssistant:",
         "max_tokens_to_sample": 500,
+        "temperature": 0.5,
+        "stop_sequences": ["\n\nHuman:"]
     }
-    response = requests.post(CLAUDE_API_URL, headers=headers, json=data)
-    response.raise_for_status()
-    result = response.json()
-    return result.get("completion", "")
+    try:
+        response = requests.post(CLAUDE_API_URL, headers=headers, json=data)
+        response.raise_for_status()
+        result = response.json()
+        return result.get("completion", "응답이 없습니다.")
+    except Exception as e:
+        return f"❌ Claude API 호출 중 오류 발생: {str(e)}"
+    
 
 # 보안 점검 항목 정의: 레지스트리 위치, 기대값, 설명 포함
 SECURITY_CHECKS = {
@@ -153,7 +163,7 @@ def read_file_internal(file_name: str) -> str:
 
 # MCP 도구: 전체 레지스트리 보안 점검 및 보고서 생성
 @mcp.tool()
-def check_registry_security() -> str:
+def check_registry_security() -> dict:
     try:
         scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         security_report = {
@@ -206,11 +216,20 @@ def check_registry_security() -> str:
         prompt_for_claude = f"다음 Windows 보안 점검 요약 내용을 쉽게 설명해줘:\n{summary}"
         claude_response = call_claude_api(prompt_for_claude)
 
-        final_result = summary + "\n\n=== Claude가 작성한 쉬운 설명 ===\n" + claude_response
-        return final_result
+        return {
+            "status" : "완료",
+            "summary" : summary,
+            "claude_explanation" : claude_response,
+            "result" : security_report
+        }
 
     except Exception as e:
         return f"시스템 보안 점검 중 오류가 발생했습니다: {str(e)}"
+    
+@mcp.tool()
+def scan_sensitive_data():
+    return check_registry_security()
+
 
 # MCP 도구: 최근 보고서 기반 권장사항 출력
 @mcp.tool()
@@ -289,7 +308,14 @@ if __name__ == "__main__":
     try:
         print("Windows 보안 점검 MCP 서버를 시작합니다...")
         print("서버 주소: http://127.0.0.1:5002")
+
+        # ✅ 직접 호출 (테스트용)
+        # result = check_registry_security()
+        # print(json.dumps(result, indent=2, ensure_ascii=False))
+
+        # MCP 도구 서버 시작
         mcp.run()
     except Exception as e:
         print(f"서버 시작 중 오류가 발생했습니다: {str(e)}")
         input("Press Enter to exit...")
+
