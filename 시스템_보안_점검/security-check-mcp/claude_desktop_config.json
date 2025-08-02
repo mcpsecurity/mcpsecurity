@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "security-test": {
+      "command": "python",
+      "args": ["C:\\security-test\\security_check_mcp.py"],
+      "env": {}
+    }
+  }
+}
