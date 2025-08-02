@@ -48,7 +48,7 @@ def run_powershell_command(command: str) -> str:
 
  
 # MCP 서버 생성
-mcp = FastMCP(name="securitychecktool1")
+mcp = FastMCP(name="security_check_mcp")
  
  
 # 간단한 에코 도구
