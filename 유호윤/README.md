@@ -31,135 +31,6 @@
 
 ## 🚀 설치 및 사용법
 
-### 필요 조건
-- Windows 10/11
-- Python 3.8 이상
-- 일부 기능은 관리자 권한 필요
-
-### 설치 방법
-
-1. **저장소 클론**
-   ```bash
-   git clone https://github.com/your-repo/security-check-mcp.git
-   cd security-check-mcp
-   ```
-
-2. **의존성(요구사항) 설치**
-   ```bash
-   pip install mcp
-   pip install fastmcp
-   ```
-
-3. **MCP 서버 실행**
-   ```bash
-   python security_check_mcp.py
-   ```
-
-### Claude와 연동 사용법
-
-1. MCP 서버를 실행한 상태에서 Claude에게 다음과 같이 요청하세요:
-
-   ```
-   "내 컴퓨터 보안 상태를 점검해줘"
-   "시스템 취약점을 확인해줘"
-   "방화벽 상태만 확인해줘"
-   "종합적인 보안 점검을 해줘"
-   ```
-
-2. Claude가 MCP 도구를 사용하여 시스템을 점검하고 결과를 분석하여 제공합니다.
-
-## 🛠️ 사용 가능한 도구
-
-| 도구명 | 설명 | 관리자 권한 필요 |
-|--------|------|------------------|
-| `check_system_updates()` | 시스템 업데이트 상태 점검 | 부분적 |
-| `check_firewall_status()` | 방화벽 정책 및 상태 점검 | 부분적 |
-| `check_antivirus_status()` | 백신/보안 소프트웨어 상태 점검 | 부분적 |
-| `run_comprehensive_security_check()` | 종합적인 보안 점검 실행 | 권장 |
-| `get_security_recommendations()` | 보안 강화 권장사항 제공 | 불필요 |
-
-## 📊 점검 결과 예시
-
-```json
-{
-  "timestamp": "2025-07-19T10:30:00",
-  "system_info": {
-    "os": "nt",
-    "admin_privileges": true
-  },
-  "update_check": {
-    "check_status": "완료",
-    "recent_updates": "...",
-    "auto_update_settings": "..."
-  },
-  "firewall_check": {
-    "firewall_profiles": "...",
-    "suspicious_rules": "..."
-  },
-  "antivirus_check": {
-    "defender_status": "...",
-    "realtime_protection_settings": "..."
-  }
-}
-```
-
-## 🔧 커스터마이징
-
-이 도구는 오픈소스로 제공되므로 다음과 같이 확장할 수 있습니다:
-
-### 새로운 점검 기능 추가
-```python
-@mcp.tool()
-def check_custom_security_feature() -> str:
-    """사용자 정의 보안 점검 기능"""
-    # 여기에 점검 로직 구현
-    pass
-```
-
-### 점검 기준 수정
-- 각 도구 함수 내의 PowerShell 명령을 수정하여 점검 기준을 조정할 수 있습니다
-- 결과 해석 로직을 수정하여 조직의 보안 정책에 맞게 조정 가능합니다
-
-## 🛡️ 보안 고려사항
-
-- 이 도구는 **읽기 전용** 점검만 수행하며, 시스템을 수정하지 않습니다
-- 모든 소스 코드가 공개되어 있어 사용자가 직접 검토할 수 있습니다
-- 네트워크를 통한 데이터 전송은 없으며, 로컬에서만 동작합니다
-- 개인정보나 민감한 데이터를 수집하지 않습니다
-
-## 🤝 기여 방법
-
-1. 이 저장소를 포크하세요
-2. 새로운 기능 브랜치를 생성하세요 (`git checkout -b feature/new-security-check`)
-3. 변경사항을 커밋하세요 (`git commit -m 'Add new security check'`)
-4. 브랜치에 푸시하세요 (`git push origin feature/new-security-check`)
-5. Pull Request를 생성하세요
-
-## 📄 라이센스
-
-이 프로젝트는 MIT 라이센스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
-
-## ⚠️ 면책 조항
-
-- 이 도구는 기본적인 보안 점검만 제공하며, 전문적인 보안 솔루션을 대체하지 않습니다
-- 시스템 보안은 복합적인 요소들을 고려해야 하므로, 추가적인 보안 조치가 필요할 수 있습니다
-- 사용자는 자신의 책임 하에 이 도구를 사용해야 합니다
-
-## 📞 지원 및 문의
-
-- Issues: [GitHub Issues](https://github.com/your-repo/security-check-mcp/issues)
-- Discussions: [GitHub Discussions](https://github.com/your-repo/security-check-mcp/discussions)
-
----
-
-**정보보안 의식 고취를 위해 함께 노력합시다! 🔐**
-
------- 다음은 설치 및 사용 상세 가이드입니다. -------
-
-# 🔒 MCP 시스템 보안 점검 도구 - 완전 설치 및 사용 가이드
-
-## 🚀 1단계: 환경 준비
-
 ### 1.1 필요 조건 확인
 - **운영체제**: Windows 10/11
 - **Python**: 3.8 이상
@@ -387,3 +258,54 @@ with open(f"security_check_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", "w"
 ```
 
 이제 MCP 시스템 보안 점검 도구를 완전히 활용할 수 있습니다! 추가 질문이나 문제가 있으시면 언제든 말씀해 주세요.
+
+## 🔧 커스터마이징
+
+이 도구는 오픈소스로 제공되므로 다음과 같이 확장할 수 있습니다:
+
+### 새로운 점검 기능 추가
+```python
+@mcp.tool()
+def check_custom_security_feature() -> str:
+    """사용자 정의 보안 점검 기능"""
+    # 여기에 점검 로직 구현
+    pass
+```
+
+### 점검 기준 수정
+- 각 도구 함수 내의 PowerShell 명령을 수정하여 점검 기준을 조정할 수 있습니다
+- 결과 해석 로직을 수정하여 조직의 보안 정책에 맞게 조정 가능합니다
+
+## 🛡️ 보안 고려사항
+
+- 이 도구는 **읽기 전용** 점검만 수행하며, 시스템을 수정하지 않습니다
+- 모든 소스 코드가 공개되어 있어 사용자가 직접 검토할 수 있습니다
+- 네트워크를 통한 데이터 전송은 없으며, 로컬에서만 동작합니다
+- 개인정보나 민감한 데이터를 수집하지 않습니다
+
+## 🤝 기여 방법
+
+1. 이 저장소를 포크하세요
+2. 새로운 기능 브랜치를 생성하세요 (`git checkout -b feature/new-security-check`)
+3. 변경사항을 커밋하세요 (`git commit -m 'Add new security check'`)
+4. 브랜치에 푸시하세요 (`git push origin feature/new-security-check`)
+5. Pull Request를 생성하세요
+
+## 📄 라이센스
+
+이 프로젝트는 MIT 라이센스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+
+## ⚠️ 면책 조항
+
+- 이 도구는 기본적인 보안 점검만 제공하며, 전문적인 보안 솔루션을 대체하지 않습니다
+- 시스템 보안은 복합적인 요소들을 고려해야 하므로, 추가적인 보안 조치가 필요할 수 있습니다
+- 사용자는 자신의 책임 하에 이 도구를 사용해야 합니다
+
+## 📞 지원 및 문의
+
+- Issues: [GitHub Issues](https://github.com/your-repo/security-check-mcp/issues)
+- Discussions: [GitHub Discussions](https://github.com/your-repo/security-check-mcp/discussions)
+
+---
+
+**정보보안 의식 고취를 위해 함께 노력합시다! 🔐**
