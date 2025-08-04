@@ -9,15 +9,15 @@ mcp로 보안 취약점 점검을 하는 대기고등학교 정보보안 프로�
 각 프로젝트의 폴더 구조는 아래와 같습니다. 사용 설명서는 각 폴더 내에 있는 `README.md` 파일을 참고해주세요.
 ```
 project
-├── 레지스트리_보안_점검
+├── 보안_위협_실체_탐지
 │   ├── README.md
 │   ├── project1.py
 │   ├── project2.py
 │   └── project3.py
-├── 시스템_보안_점검
+├── 보안_환경_설정_점검
 │   ├── README.md
 │   └── project1.py
-└── 브라우저_보안_점검
+└── 사용자_노출_경로_분
     ├── README.md
     ├── project1.py
     ├── project2.py
