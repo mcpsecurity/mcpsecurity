@@ -75,14 +75,16 @@ class BrowserSecurityAnalyzer:
         if self.system == "Windows":
             # Windows 환경에서 경로 처리 개선
             appdata = os.environ.get('APPDATA', '')
-            if appdata:
-                base_path = Path(appdata).parent
+            localappdata = os.environ.get('LOCALAPPDATA', '')
+            
+            if appdata and localappdata:
                 paths.update({
-                    'chrome': base_path / 'Local' / 'Google' / 'Chrome' / 'User Data' / 'Default',
-                    'firefox': base_path / 'Roaming' / 'Mozilla' / 'Firefox' / 'Profiles',
-                    'edge': base_path / 'Local' / 'Microsoft' / 'Edge' / 'User Data' / 'Default',
-                    'opera': base_path / 'Roaming' / 'Opera Software' / 'Opera Stable'
+                    'chrome': Path(localappdata) / 'Google' / 'Chrome' / 'User Data' / 'Default',
+                    'firefox': Path(appdata) / 'Mozilla' / 'Firefox' / 'Profiles',
+                    'edge': Path(localappdata) / 'Microsoft' / 'Edge' / 'User Data' / 'Default',
+                    'opera': Path(appdata) / 'Opera Software' / 'Opera Stable'
                 })
+                
         elif self.system == "Darwin":  # macOS
             home = Path.home()
             paths.update({
@@ -377,25 +379,27 @@ class BrowserSecurityAnalyzer:
                                 continue
             
             elif browser == 'firefox':
-                # Firefox 확장 프로그램 분석
-                extensions_db = profile_path / 'extensions.json'
-                if extensions_db.exists():
-                    data = self.safe_json_load(extensions_db)
-                    if data:
-                        for addon in data.get('addons', []):
-                            if addon.get('type') == 'extension':
-                                permissions = addon.get('userPermissions', {}).get('permissions', [])
-                                risk_level = self.assess_extension_risk(permissions)
-                                
-                                extensions.append(ExtensionInfo(
-                                    id=addon.get('id', 'Unknown'),
-                                    name=addon.get('defaultLocale', {}).get('name', 
-                                          addon.get('name', 'Unknown Extension')),
-                                    version=addon.get('version', 'Unknown'),
-                                    enabled=addon.get('active', False),
-                                    permissions=permissions,
-                                    risk_level=risk_level
-                                ))
+                # Firefox 확장 프로그램 분석 시도
+                default_profile = self.get_firefox_default_profile(profile_path)
+                if default_profile:
+                    extensions_db = default_profile / 'extensions.json'
+                    if extensions_db.exists():
+                        data = self.safe_json_load(extensions_db)
+                        if data:
+                            for addon in data.get('addons', []):
+                                if addon.get('type') == 'extension':
+                                    permissions = addon.get('userPermissions', {}).get('permissions', [])
+                                    risk_level = self.assess_extension_risk(permissions)
+                                    
+                                    extensions.append(ExtensionInfo(
+                                        id=addon.get('id', 'Unknown'),
+                                        name=addon.get('defaultLocale', {}).get('name', 
+                                              addon.get('name', 'Unknown Extension')),
+                                        version=addon.get('version', 'Unknown'),
+                                        enabled=addon.get('active', False),
+                                        permissions=permissions,
+                                        risk_level=risk_level
+                                    ))
                             
         except Exception as e:
             print(f"확장 프로그램 분석 중 오류 발생: {str(e)}")
@@ -489,7 +493,7 @@ class BrowserSecurityAnalyzer:
         
         return report
 
-    def get_firefox_default_profile(self, firefox_path: Path) -> Path:
+    def get_firefox_default_profile(self, firefox_path: Path) -> Optional[Path]:
         """Firefox 기본 프로필 경로 반환"""
         try:
             profiles_ini = firefox_path / 'profiles.ini'
@@ -517,7 +521,7 @@ class BrowserSecurityAnalyzer:
         except Exception as e:
             print(f"Firefox 프로필 경로 찾기 실패: {e}")
         
-        return firefox_path
+        return None
 
     def analyze_all_browsers(self) -> Dict[str, Any]:
         """모든 브라우저 분석"""
@@ -532,14 +536,13 @@ class BrowserSecurityAnalyzer:
                     # 보안 설정 분석
                     if browser == 'chrome':
                         security_checks = self.analyze_chrome_settings(path)
+                        extensions = self.analyze_extensions(browser, path)
                     elif browser == 'firefox':
-                        security_checks = self.analyze_firefox_settings(path.parent)
-                        path = self.get_firefox_default_profile(path.parent)
+                        security_checks = self.analyze_firefox_settings(path)
+                        extensions = self.analyze_extensions(browser, path)
                     else:
                         security_checks = self.analyze_chrome_settings(path)  # Edge, Opera는 Chromium 기반
-                    
-                    # 확장 프로그램 분석
-                    extensions = self.analyze_extensions(browser, path)
+                        extensions = self.analyze_extensions(browser, path)
                     
                     # 보고서 생성
                     report = self.generate_report(browser, security_checks, extensions)
@@ -616,16 +619,4 @@ def main():
         print(f"발견된 확장 프로그램: {total_extensions}개")
         
         # 위험도별 확장 프로그램 통계
-        risk_summary = {'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
-        for result in results.values():
-            for ext in result['extensions']:
-                risk_summary[ext.risk_level] += 1
-        
-        print("\n🔌 전체 확장 프로그램 위험도 분포:")
-        for risk, count in risk_summary.items():
-            print(f"  {risk}: {count}개")
-        
-        # 보안 권장사항
-        print("\n💡 주요 보안 권장사항:")
-        recommendations = [
-            "정기적으로 확장 프로그램을 점검 하세요."
+        risk_summary = {'HIGH': 
