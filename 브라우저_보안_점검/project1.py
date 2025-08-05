@@ -656,4 +656,63 @@ def main():
         print("오류가 지속되면 관리자 권한으로 실행해보세요.")
 
 if __name__ == "__main__":
-    main() 
+    """메인 실행 함수"""
+    print("🔒 브라우저 보안 설정 분석기")
+    print("=" * 60)
+    print(f"운영체제: {platform.system()}")
+    print(f"Python 버전: {sys.version}")
+    print("=" * 60)
+    
+    try:
+        analyzer = BrowserSecurityAnalyzer()
+        results = analyzer.analyze_all_browsers()
+        
+        # 전체 요약
+        print("\n" + "=" * 60)
+        print("📄 전체 분석 요약")
+        print("=" * 60)
+        
+        analyzed_browsers = [browser for browser, data in results.items() 
+                           if data['security_checks'] and data['security_checks'][0].status != 'INFO']
+        total_extensions = sum(len(result['extensions']) for result in results.values())
+        
+        print(f"분석된 브라우저: {len(analyzed_browsers)}개")
+        print(f"발견된 확장 프로그램: {total_extensions}개")
+        
+        # 위험도별 확장 프로그램 통계
+        risk_summary = {'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
+        for result in results.values():
+            for ext in result['extensions']:
+                risk_summary[ext.risk_level] += 1
+        
+        print("\n🔌 전체 확장 프로그램 위험도 분포:")
+        for risk, count in risk_summary.items():
+            print(f"  {risk}: {count}개")
+        
+        # 보안 권장사항
+        print("\n💡 주요 보안 권장사항:")
+        recommendations = [
+            "정기적으로 확장 프로그램을 점검하고 불필요한 확장은 제거하세요.",
+            "서드파티 쿠키를 차단하여 추적을 방지하세요.",
+            "안전한 브라우징 기능을 활성화하여 악성 사이트를 차단하세요.",
+            "브라우저를 최신 버전으로 유지하세요.",
+            "의심스러운 다운로드나 팝업을 피하세요.",
+            "중요한 사이트에서는 2단계 인증을 사용하세요."
+        ]
+        
+        for i, rec in enumerate(recommendations, 1):
+            print(f"  {i}. {rec}")
+        
+        # 결과를 파일로 저장할지 묻기
+        save_choice = input("\n결과를 파일로 저장하시겠습니까? (y/n): ").lower().strip()
+        if save_choice in ['y', 'yes']:
+            analyzer.save_results_to_file(results)
+        
+        print("\n분석이 완료되었습니다!")
+        
+    except KeyboardInterrupt:
+        print("\n\n분석이 사용자에 의해 중단되었습니다.")
+    except Exception as e:
+        print(f"\n분석 중 오류가 발생했습니다: {str(e)}")
+        print("오류가 지속되면 관리자 권한으로 실행해보세요.")
+ 
