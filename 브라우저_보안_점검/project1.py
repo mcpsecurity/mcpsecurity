@@ -5,6 +5,7 @@
 주요 브라우저의 보안 설정과 확장 프로그램을 분석하여 보안 위험도를 평가합니다.
 """
 
+from mcp.server.fastmcp import FastMCP
 import json
 import os
 import sqlite3
@@ -15,6 +16,9 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 import platform
 import sys
+
+# === 기존 설정 유지 ===
+mcp = FastMCP(name="system_checker", host="127.0.0.1", port=5005, timeout=40)
 
 @dataclass
 class SecurityCheck:
@@ -37,10 +41,10 @@ class ExtensionInfo:
 class BrowserSecurityAnalyzer:
     def __init__(self):
         self.system = platform.system()
-        self.security_checks = []
-        self.extensions_info = []
+        self.security_checks: List[SecurityCheck] = []
+        self.extensions_info: List[ExtensionInfo] = []
         
-        # 보안 체크리스트 정의
+        # 보안 체크리스트 정의 (기존 유지)
         self.security_checklist = {
             'javascript_enabled': {
                 'description': 'JavaScript 활성화 상태',
@@ -70,7 +74,7 @@ class BrowserSecurityAnalyzer:
 
     def get_browser_paths(self) -> Dict[str, Path]:
         """운영체제별 브라우저 설정 파일 경로를 반환"""
-        paths = {}
+        paths: Dict[str, Path] = {}
         
         if self.system == "Windows":
             # Windows 환경에서 경로 처리 개선
@@ -116,7 +120,7 @@ class BrowserSecurityAnalyzer:
 
     def analyze_chrome_settings(self, profile_path: Path) -> List[SecurityCheck]:
         """Chrome 설정 분석"""
-        checks = []
+        checks: List[SecurityCheck] = []
         
         try:
             # Preferences 파일 분석
@@ -167,7 +171,8 @@ class BrowserSecurityAnalyzer:
                 ))
             
             # 팝업 차단 확인
-            popup_setting = prefs.get('profile', {}).get('content_settings', {}).get('exceptions', {}).get('popups', {})
+            popup_setting = prefs.get('profile', {}).get('content_settings', {}).get('exceptions', {}).get('popups', {}
+            )
             if popup_setting:
                 checks.append(SecurityCheck(
                     'popup_blocker', 'PASS',
@@ -218,7 +223,7 @@ class BrowserSecurityAnalyzer:
 
     def analyze_firefox_settings(self, profile_path: Path) -> List[SecurityCheck]:
         """Firefox 설정 분석"""
-        checks = []
+        checks: List[SecurityCheck] = []
         
         try:
             # profiles.ini 파일에서 프로필 찾기
@@ -235,7 +240,7 @@ class BrowserSecurityAnalyzer:
             config.read(profiles_ini, encoding='utf-8')
             
             # 기본 프로필 찾기
-            default_profile = None
+            default_profile: Optional[str] = None
             for section in config.sections():
                 if 'Profile' in section:
                     if config.getboolean(section, 'Default', fallback=False):
@@ -336,7 +341,7 @@ class BrowserSecurityAnalyzer:
 
     def analyze_extensions(self, browser: str, profile_path: Path) -> List[ExtensionInfo]:
         """확장 프로그램 정보 분석"""
-        extensions = []
+        extensions: List[ExtensionInfo] = []
         
         try:
             if browser in ['chrome', 'edge', 'opera']:
@@ -523,124 +528,169 @@ class BrowserSecurityAnalyzer:
         
         return None
 
-    """메인 실행 함수"""
-    print("🔒 브라우저 보안 설정 분석기")
-    print("=" * 60)
-    print(f"운영체제: {platform.system()}")
-    print(f"Python 버전: {sys.version}")
-    print("=" * 60)
-    
-    try:
-        analyzer = BrowserSecurityAnalyzer()
-        results = analyzer.analyze_all_browsers()
-        
-        # 전체 요약
-        print("\n" + "=" * 60)
-        print("📄 전체 분석 요약")
-        print("=" * 60)
-        
-        analyzed_browsers = [browser for browser, data in results.items() 
-                           if data['security_checks'] and data['security_checks'][0].status != 'INFO']
-        total_extensions = sum(len(result['extensions']) for result in results.values())
-        
-        print(f"분석된 브라우저: {len(analyzed_browsers)}개")
-        print(f"발견된 확장 프로그램: {total_extensions}개")
-        
-        # 위험도별 확장 프로그램 통계
-        risk_summary = {'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
-        for result in results.values():
-            for ext in result['extensions']:
-                risk_summary[ext.risk_level] += 1
-        
-        print("\n🔌 전체 확장 프로그램 위험도 분포:")
-        for risk, count in risk_summary.items():
-            print(f"  {risk}: {count}개")
-        
-        # 보안 권장사항
-        print("\n💡 주요 보안 권장사항:")
-        recommendations = [
-            "정기적으로 확장 프로그램을 점검하고 불필요한 확장은 제거하세요.",
-            "서드파티 쿠키를 차단하여 추적을 방지하세요.",
-            "안전한 브라우징 기능을 활성화하여 악성 사이트를 차단하세요.",
-            "브라우저를 최신 버전으로 유지하세요.",
-            "의심스러운 다운로드나 팝업을 피하세요.",
-            "중요한 사이트에서는 2단계 인증을 사용하세요."
-        ]
-        
-        for i, rec in enumerate(recommendations, 1):
-            print(f"  {i}. {rec}")
-        
-        # 결과를 파일로 저장할지 묻기
-        save_choice = input("\n결과를 파일로 저장하시겠습니까? (y/n): ").lower().strip()
-        if save_choice in ['y', 'yes']:
-            analyzer.save_results_to_file(results)
-        
-        print("\n분석이 완료되었습니다!")
-        
-    except KeyboardInterrupt:
-        print("\n\n분석이 사용자에 의해 중단되었습니다.")
-    except Exception as e:
-        print(f"\n분석 중 오류가 발생했습니다: {str(e)}")
-        print("오류가 지속되면 관리자 권한으로 실행해보세요.")
+    # === (추가) 누락되었던 함수 1: 모든 브라우저 스캔 ===
+    def analyze_all_browsers(self) -> Dict[str, Dict[str, Any]]:
+        """모든 브라우저의 설정/확장 프로그램을 점검해 결과를 묶어서 반환"""
+        results: Dict[str, Dict[str, Any]] = {}
+        paths = self.get_browser_paths()
+
+        for browser, path in paths.items():
+            checks: List[SecurityCheck] = []
+            try:
+                if browser in ('chrome', 'edge', 'opera'):
+                    checks.extend(self.analyze_chrome_settings(path))
+                elif browser == 'firefox':
+                    checks.extend(self.analyze_firefox_settings(path))
+                # safari 등은 현재 스킵
+            except Exception as e:
+                checks.append(SecurityCheck(
+                    f'{browser}_analysis', 'FAIL', f'{browser} 분석 중 오류: {e}'
+                ))
+
+            exts = self.analyze_extensions(browser, path)
+            report = self.generate_report(browser, checks, exts)
+
+            results[browser] = {
+                'security_checks': checks,
+                'extensions': exts,
+                'report': report,
+            }
+        return results
+
+    # === (추가) 누락되었던 함수 2: 결과 저장 ===
+    def save_results_to_file(self, results: Dict[str, Any], out_path: Optional[Path] = None) -> str:
+        """점검 결과를 JSON 파일로 저장하고 경로를 반환"""
+        out = out_path or (Path.cwd() / f"browser_security_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+        serializable: Dict[str, Any] = {}
+        for b, data in results.items():
+            serializable[b] = {
+                'security_checks': [asdict(c) for c in data['security_checks']],
+                'extensions': [asdict(e) for e in data['extensions']],
+                'report': data['report'],
+            }
+        with open(out, 'w', encoding='utf-8') as f:
+            json.dump(serializable, f, ensure_ascii=False, indent=2)
+        return str(out)
+
+
+# ===== MCP 툴 등록 =====
+analyzer = BrowserSecurityAnalyzer()
+
+@mcp.tool()
+def scan_browsers() -> Dict[str, Any]:
+    """
+    모든 브라우저를 스캔하고 요약+세부 JSON을 반환합니다.
+    """
+    results = analyzer.analyze_all_browsers()
+    summary = {
+        'browsers': list(results.keys()),
+        'total_extensions': sum(len(v['extensions']) for v in results.values()),
+    }
+    return {
+        'summary': summary,
+        'results': {
+            b: {
+                'security_checks': [asdict(c) for c in v['security_checks']],
+                'extensions': [asdict(e) for e in v['extensions']],
+            } for b, v in results.items()
+        }
+    }
+
+@mcp.tool()
+def get_browser_report_text(browser: str) -> str:
+    """
+    특정 브라우저의 텍스트 보고서를 반환합니다. 예: 'chrome', 'firefox', 'edge', 'opera'
+    """
+    results = analyzer.analyze_all_browsers()
+    if browser not in results:
+        return f"{browser} 분석 결과가 없습니다."
+    return results[browser]['report']
+
+@mcp.tool()
+def save_scan_to_file() -> str:
+    """
+    방금 스캔한 결과를 JSON 파일로 저장하고 파일 경로를 반환합니다.
+    """
+    results = analyzer.analyze_all_browsers()
+    return analyzer.save_results_to_file(results)
+
 
 if __name__ == "__main__":
-    """메인 실행 함수"""
-    print("🔒 브라우저 보안 설정 분석기")
-    print("=" * 60)
-    print(f"운영체제: {platform.system()}")
-    print(f"Python 버전: {sys.version}")
-    print("=" * 60)
-    
-    try:
-        analyzer = BrowserSecurityAnalyzer()
-        results = analyzer.analyze_all_browsers()
-        
-        # 전체 요약
-        print("\n" + "=" * 60)
-        print("📄 전체 분석 요약")
+    # 실행 모드 선택: 기본은 MCP, 기존 CLI는 --cli 옵션으로 실행
+    run_cli = ("--cli" in sys.argv)
+
+    if not run_cli:
+        # === MCP 모드 (Claude Desktop/Server와 연결) ===
+        # 환경변수 MCP_TRANSPORT=http 로 두면 HTTP 시도, 기본은 stdio
+        transport = os.getenv("MCP_TRANSPORT", "stdio").lower()
+        try:
+            if transport == "http":
+                # 일부 FastMCP 구현에서는 transport 인자를 지원하지 않을 수 있음 → 예외 시 기본 run()
+                mcp.run(transport="http")
+            else:
+                mcp.run()  # 기본 stdio
+        except TypeError:
+            # 호환성 위해 fallback
+            mcp.run()
+    else:
+        # === 기존 CLI 모드 (원래 출력/입력 흐름 유지) ===
+        print("🔒 브라우저 보안 설정 분석기")
+        print("=" * 60)
+        print(f"운영체제: {platform.system()}")
+        print(f"Python 버전: {sys.version}")
         print("=" * 60)
         
-        analyzed_browsers = [browser for browser, data in results.items() 
-                           if data['security_checks'] and data['security_checks'][0].status != 'INFO']
-        total_extensions = sum(len(result['extensions']) for result in results.values())
-        
-        print(f"분석된 브라우저: {len(analyzed_browsers)}개")
-        print(f"발견된 확장 프로그램: {total_extensions}개")
-        
-        # 위험도별 확장 프로그램 통계
-        risk_summary = {'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
-        for result in results.values():
-            for ext in result['extensions']:
-                risk_summary[ext.risk_level] += 1
-        
-        print("\n🔌 전체 확장 프로그램 위험도 분포:")
-        for risk, count in risk_summary.items():
-            print(f"  {risk}: {count}개")
-        
-        # 보안 권장사항
-        print("\n💡 주요 보안 권장사항:")
-        recommendations = [
-            "정기적으로 확장 프로그램을 점검하고 불필요한 확장은 제거하세요.",
-            "서드파티 쿠키를 차단하여 추적을 방지하세요.",
-            "안전한 브라우징 기능을 활성화하여 악성 사이트를 차단하세요.",
-            "브라우저를 최신 버전으로 유지하세요.",
-            "의심스러운 다운로드나 팝업을 피하세요.",
-            "중요한 사이트에서는 2단계 인증을 사용하세요."
-        ]
-        
-        for i, rec in enumerate(recommendations, 1):
-            print(f"  {i}. {rec}")
-        
-        # 결과를 파일로 저장할지 묻기
-        save_choice = input("\n결과를 파일로 저장하시겠습니까? (y/n): ").lower().strip()
-        if save_choice in ['y', 'yes']:
-            analyzer.save_results_to_file(results)
-        
-        print("\n분석이 완료되었습니다!")
-        
-    except KeyboardInterrupt:
-        print("\n\n분석이 사용자에 의해 중단되었습니다.")
-    except Exception as e:
-        print(f"\n분석 중 오류가 발생했습니다: {str(e)}")
-        print("오류가 지속되면 관리자 권한으로 실행해보세요.")
+        try:
+            results = analyzer.analyze_all_browsers()
+            
+            # 전체 요약
+            print("\n" + "=" * 60)
+            print("📄 전체 분석 요약")
+            print("=" * 60)
+            
+            analyzed_browsers = [browser for browser, data in results.items() 
+                               if data['security_checks'] and data['security_checks'][0].status != 'INFO']
+            total_extensions = sum(len(result['extensions']) for result in results.values())
+            
+            print(f"분석된 브라우저: {len(analyzed_browsers)}개")
+            print(f"발견된 확장 프로그램: {total_extensions}개")
+            
+            # 위험도별 확장 프로그램 통계
+            risk_summary = {'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
+            for result in results.values():
+                for ext in result['extensions']:
+                    risk_summary[ext.risk_level] += 1
+            
+            print("\n🔌 전체 확장 프로그램 위험도 분포:")
+            for risk, count in risk_summary.items():
+                print(f"  {risk}: {count}개")
+            
+            # 보안 권장사항
+            print("\n💡 주요 보안 권장사항:")
+            recommendations = [
+                "정기적으로 확장 프로그램을 점검하고 불필요한 확장은 제거하세요.",
+                "서드파티 쿠키를 차단하여 추적을 방지하세요.",
+                "안전한 브라우징 기능을 활성화하여 악성 사이트를 차단하세요.",
+                "브라우저를 최신 버전으로 유지하세요.",
+                "의심스러운 다운로드나 팝업을 피하세요.",
+                "중요한 사이트에서는 2단계 인증을 사용하세요."
+            ]
+            
+            for i, rec in enumerate(recommendations, 1):
+                print(f"  {i}. {rec}")
+            
+            # 결과를 파일로 저장할지 묻기 (기존 동작 유지)
+            save_choice = input("\n결과를 파일로 저장하시겠습니까? (y/n): ").lower().strip()
+            if save_choice in ['y', 'yes']:
+                path = analyzer.save_results_to_file(results)
+                print(f"저장 완료: {path}")
+            
+            print("\n분석이 완료되었습니다!")
+            
+        except KeyboardInterrupt:
+            print("\n\n분석이 사용자에 의해 중단되었습니다.")
+        except Exception as e:
+            print(f"\n분석 중 오류가 발생했습니다: {str(e)}")
+            print("오류가 지속되면 관리자 권한으로 실행해보세요.")
+
  
